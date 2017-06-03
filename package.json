@@ -1,0 +1,22 @@
+{
+  "name": "tm3lib",
+  "version": "0.0.1",
+  "description": "Functional library for Ticketmatic 3",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ticketmaticbenelux/tm3lib.git"
+  },
+  "keywords": [
+    "Ticketmatic"
+  ],
+  "author": "Ticketmatic Nederland",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ticketmaticbenelux/tm3lib/issues"
+  },
+  "homepage": "https://github.com/ticketmaticbenelux/tm3lib#readme"
+}
