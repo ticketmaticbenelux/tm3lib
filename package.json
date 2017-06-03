@@ -18,5 +18,9 @@
   "bugs": {
     "url": "https://github.com/ticketmaticbenelux/tm3lib/issues"
   },
-  "homepage": "https://github.com/ticketmaticbenelux/tm3lib#readme"
+  "homepage": "https://github.com/ticketmaticbenelux/tm3lib#readme",
+  "dependencies": {
+    "node-env-file": "^0.1.8",
+    "tm_api": "git+https://github.com/ticketmaticbenelux/tm_api.git"
+  }
 }
