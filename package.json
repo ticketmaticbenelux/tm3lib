@@ -21,6 +21,18 @@
   "homepage": "https://github.com/ticketmaticbenelux/tm3lib#readme",
   "dependencies": {
     "node-env-file": "^0.1.8",
+    "ramda": "^0.24.1",
     "tm_api": "git+https://github.com/ticketmaticbenelux/tm_api.git"
+  },
+  "jshintConfig": {
+    "node": true,
+    "esversion": 6,
+    "asi": true,
+    "predef": [
+      "-Promise"
+    ],
+    "globals": {
+      "Promise": true
+    }
   }
 }
