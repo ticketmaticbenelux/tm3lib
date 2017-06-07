@@ -10,6 +10,8 @@ const   util = require("util"),
 
 api.setDebug(true)
 
+exports.api = api
+
 const   _ = R.__, apply = R.apply, assoc = R.assoc, concat = R.concat, curry = R.curry, groupBy = R.groupBy, has = R.has, head = R.head, is = R.is, juxt = R.juxt, pipe = R.pipe, pluck = R.pluck, values = R.values, objOf = R.objOf, prop = R.prop, tap = R.tap, when = R.when, 
         map = curry(Promise.mapSeries),
         isNotEmpty = R.complement(R.isEmpty),
@@ -62,7 +64,10 @@ const removeTicketsOfEvents = (client, events) => {
 
 exports.removeTicketsOfEvents = removeTicketsOfEvents
 
-exports.getDocumentUrl = curry((client, documentid, orderid) => api.get(client, "orderdocuments", [orderid, documentid]).then(R.prop('url')))
+exports.getDocumentUrl = curry((client, documentid, orderid) => api.get(client, "orderdocuments", [orderid, documentid])
+                            .then(R.prop('url'))
+                            .then(s => s.substring(1))
+                            .then(R.concat("http://")))
 
 const getCustomField = curry((endpoint, client, id, key) => api.query(client, `select c_${key} from tm.${endpoint.slice(0,-1)} where id = ${id}`).then(head).then(prop(concat("c_", key))))
 
