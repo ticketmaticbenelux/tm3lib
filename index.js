@@ -1,8 +1,5 @@
 'use strict'
 
-const env = require('node-env-file')
-env(__dirname + '/.env')
-
 const   util = require("util"),
         R = require("ramda"),
         Promise = require("bluebird"),

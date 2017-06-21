@@ -1,6 +1,6 @@
 {
   "name": "tm3lib",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Functional library for Ticketmatic 3",
   "main": "index.js",
   "scripts": {
@@ -21,7 +21,6 @@
   "homepage": "https://github.com/ticketmaticbenelux/tm3lib#readme",
   "dependencies": {
     "bluebird": "^3.5.0",
-    "node-env-file": "^0.1.8",
     "ramda": "^0.24.1",
     "tm_api": "git+https://github.com/ticketmaticbenelux/tm_api.git"
   },
