@@ -88,7 +88,7 @@ const sqlSalesPerTickettypeprice = `    select
                                             base.tickettypepriceid,
                                             base.tickettypeid,
                                             base.pricetypeid,
-                                            base.tickettype,
+                                            base.contingent,
                                             base.pricetype, 
                                             base.max,
                                             t.tickets_sold,
@@ -103,35 +103,36 @@ const sqlSalesPerTickettypeprice = `    select
                                             sc.num_prices open_prices    
 
                                         from (
-                                            select ttp.id tickettypepriceid, tt.eventid, tt.id tickettypeid, pt.id pricetypeid, tt.namenl tickettype, pt.namenl pricetype, cast(x->>'maximum' as integer) as max
+                                            select ttp.id tickettypepriceid, tt.eventid, tt.id tickettypeid, tt.seatrankid, pt.id pricetypeid, coalesce(tt.namenl, sr.namenl) contingent, pt.namenl pricetype, cast(x->>'maximum' as integer) as max
                                             from tm.tickettypeprice ttp
                                             inner join tm.tickettype tt on tt.id = ttp.tickettypeid
+                                            left join tm.seatrank sr on tt.seatrankid = sr.id
                                             inner join tm.pricetype pt on pt.id = ttp.pricetypeid
                                             inner join tm.event e on e.id = tt.eventid
-                                            inner join json_array_elements(e.c_maxpricetype::json) x on x->>'prijstype' = pt.namenl
+                                            inner join json_array_elements(e.c_maxpricetype::json) x on x->>'prijstype' = pt.namenl and x->>'rang' = coalesce(tt.namenl, sr.namenl)
                                             where e.c_maxpricetype is not null
                                         ) base
 
                                         left join (
-                                            select eventid, pt.id pricetypeid, count(t.id) tickets_sold
+                                            select eventid, tt.id tickettypeid, pt.id pricetypeid, count(t.id) tickets_sold
                                             from tm.tickettypeprice ttp 
                                             inner join tm.tickettype tt on tt.id = ttp.tickettypeid
                                             inner join tm.pricetype pt on pt.id = ttp.pricetypeid
                                             left join tm.ticket t on ttp.id = t.tickettypepriceid and t.currentstatus in (101,103) -- reserved/sold and delivered
-                                            group by eventid, pt.id
+                                            group by eventid, tt.id, pt.id
                                         ) t
-                                        on base.eventid = t.eventid and base.pricetypeid = t.pricetypeid
+                                        on base.eventid = t.eventid and base.tickettypeid = t.tickettypeid and base.pricetypeid = t.pricetypeid
 
                                         left join (
-                                            select tt.eventid, ttp.pricetypeid, count(sc_ev_pr.*) num_prices
+                                            select tt.eventid, ttp.tickettypeid, ttp.pricetypeid, count(sc_ev_pr.*) num_prices
                                             from tm.tickettypeprice ttp
                                             inner join tm.tickettype tt on tt.id = ttp.tickettypeid
                                             left join ev.saleschanneleventprices sc_ev_pr on ttp.id = sc_ev_pr.tickettypepriceid
-                                            group by tt.eventid, ttp.pricetypeid
+                                            group by tt.eventid, ttp.tickettypeid, ttp.pricetypeid
                                         ) sc
-                                        on sc.eventid = base.eventid and sc.pricetypeid = base.pricetypeid
+                                        on sc.eventid = base.eventid and sc.tickettypeid = base.tickettypeid and sc.pricetypeid = base.pricetypeid
 
-                                        group by base.eventid, base.tickettypepriceid, base.tickettypeid, base.pricetypeid, base.tickettype, base.pricetype, base.max, t.tickets_sold, sc.num_prices`
+                                        group by base.eventid, base.tickettypepriceid, base.tickettypeid, base.pricetypeid, base.contingent, base.pricetype, base.max, t.tickets_sold, sc.num_prices`
 
 const checkSalesPerTickettypeprice = curry(api.query)(_, sqlSalesPerTickettypeprice)
 
