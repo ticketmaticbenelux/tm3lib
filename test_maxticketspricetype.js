@@ -131,11 +131,6 @@ let pEvents = pActions
 .then(fetchEvents)
 .then(addToCache('events'))
 
-/*
-pEvents
-.then(() => console.log(CACHE))
-*/
-
 pEvents
 .then(handleActions)
 
