@@ -12,7 +12,7 @@ api.setDebug(true)
 
 exports.api = api
 
-const   _ = R.__, apply = R.apply, assoc = R.assoc, concat = R.concat, curry = R.curry, groupBy = R.groupBy, has = R.has, head = R.head, is = R.is, juxt = R.juxt, pipe = R.pipe, pluck = R.pluck, values = R.values, objOf = R.objOf, prop = R.prop, tap = R.tap, when = R.when, 
+const   _ = R.__, apply = R.apply, assoc = R.assoc, concat = R.concat, curry = R.curry, filter = R.filter, groupBy = R.groupBy, has = R.has, head = R.head, is = R.is, juxt = R.juxt, pipe = R.pipe, pipeP = R.pipeP, pluck = R.pluck, values = R.values, objOf = R.objOf, prop = R.prop, propEq = R.propEq, tap = R.tap, when = R.when, 
         map = curry(Promise.mapSeries),
         isNotEmpty = R.complement(R.isEmpty),
 		maybeProp = curry( (property, value) => {
@@ -83,4 +83,60 @@ exports.updateOrderField = updateCustomField("orders")
 
 exports.sendDelivery = curry((client, templateid, orderid) => api.post(client, "emaildelivery", orderid, {templateid}))
 
- 
+const sqlSalesPerTickettypeprice = `    select 
+                                            base.eventid,
+                                            base.tickettypepriceid,
+                                            base.tickettypeid,
+                                            base.pricetypeid,
+                                            base.tickettype,
+                                            base.pricetype, 
+                                            base.max,
+                                            t.tickets_sold,
+                                            base.max - t.tickets_sold as diff,
+                                            case
+                                                when (base.max - t.tickets_sold) <= 0 and sum(sc.num_prices) > 0 then 'CLOSE'        
+                                                when (base.max - t.tickets_sold) <= 0 and sum(sc.num_prices) = 0 then 'ALREADY_CLOSED'        
+                                                when (base.max - t.tickets_sold) < 2 then 'CRITICAL'
+                                                when (base.max - t.tickets_sold) < 10 then 'HIGH'
+                                            else 'NORMAL'
+                                            end as monitorstatus,
+                                            sc.num_prices open_prices    
+
+                                        from (
+                                            select ttp.id tickettypepriceid, tt.eventid, tt.id tickettypeid, pt.id pricetypeid, tt.namenl tickettype, pt.namenl pricetype, cast(x->>'maximum' as integer) as max
+                                            from tm.tickettypeprice ttp
+                                            inner join tm.tickettype tt on tt.id = ttp.tickettypeid
+                                            inner join tm.pricetype pt on pt.id = ttp.pricetypeid
+                                            inner join tm.event e on e.id = tt.eventid
+                                            inner join json_array_elements(e.c_maxpricetype::json) x on x->>'prijstype' = pt.namenl
+                                            where e.c_maxpricetype is not null
+                                        ) base
+
+                                        left join (
+                                            select eventid, pt.id pricetypeid, count(t.id) tickets_sold
+                                            from tm.tickettypeprice ttp 
+                                            inner join tm.tickettype tt on tt.id = ttp.tickettypeid
+                                            inner join tm.pricetype pt on pt.id = ttp.pricetypeid
+                                            left join tm.ticket t on ttp.id = t.tickettypepriceid and t.currentstatus in (101,103) -- reserved/sold and delivered
+                                            group by eventid, pt.id
+                                        ) t
+                                        on base.eventid = t.eventid and base.pricetypeid = t.pricetypeid
+
+                                        left join (
+                                            select tt.eventid, ttp.pricetypeid, count(sc_ev_pr.*) num_prices
+                                            from tm.tickettypeprice ttp
+                                            inner join tm.tickettype tt on tt.id = ttp.tickettypeid
+                                            left join ev.saleschanneleventprices sc_ev_pr on ttp.id = sc_ev_pr.tickettypepriceid
+                                            group by tt.eventid, ttp.pricetypeid
+                                        ) sc
+                                        on sc.eventid = base.eventid and sc.pricetypeid = base.pricetypeid
+
+                                        group by base.eventid, base.tickettypepriceid, base.tickettypeid, base.pricetypeid, base.tickettype, base.pricetype, base.max, t.tickets_sold, sc.num_prices`
+
+const checkSalesPerTickettypeprice = curry(api.query)(_, sqlSalesPerTickettypeprice)
+
+const mustClose = propEq('monitorstatus', 'CLOSE')
+const checkTickettypepricesToClose = pipeP(checkSalesPerTickettypeprice, filter(mustClose))
+
+exports.checkSalesPerTickettypeprice = checkSalesPerTickettypeprice
+exports.checkTickettypepricesToClose = checkTickettypepricesToClose
