@@ -87,6 +87,7 @@ const sqlSalesPerTickettypeprice = `    select
                                             base.eventid,
                                             base.tickettypepriceid,
                                             base.tickettypeid,
+                                            base.seatrankid, 
                                             base.pricetypeid,
                                             base.contingent,
                                             base.pricetype, 
@@ -132,7 +133,7 @@ const sqlSalesPerTickettypeprice = `    select
                                         ) sc
                                         on sc.eventid = base.eventid and sc.tickettypeid = base.tickettypeid and sc.pricetypeid = base.pricetypeid
 
-                                        group by base.eventid, base.tickettypepriceid, base.tickettypeid, base.pricetypeid, base.contingent, base.pricetype, base.max, t.tickets_sold, sc.num_prices`
+                                        group by base.eventid, base.tickettypepriceid, base.tickettypeid, base.seatrankid, base.pricetypeid, base.contingent, base.pricetype, base.max, t.tickets_sold, sc.num_prices`
 
 const checkSalesPerTickettypeprice = curry(api.query)(_, sqlSalesPerTickettypeprice)
 
