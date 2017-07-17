@@ -108,7 +108,7 @@ const sqlSalesPerTickettypeprice = `    select
                                             inner join tm.pricetype pt on pt.id = ttp.pricetypeid
                                             inner join tm.event e on e.id = tt.eventid
                                             inner join json_array_elements(e.c_maxpricetype::json) x on x->>'prijstype' = pt.namenl and x->>'rang' = coalesce(tt.namenl, sr.namenl)
-                                            where e.c_maxpricetype is not null
+                                            where e.c_maxpricetype is not null and e.c_maxpricetype != ''
                                         ) base
 
                                         left join (
